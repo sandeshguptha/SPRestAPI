@@ -1,0 +1,240 @@
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+<div id="masterTable"></div>
+<input type = "button" value= "Next" id="btnNext"/>
+<input type = "button" value= "Previous" id="btnPrev" />
+
+<script src="https://team.effem.com/sites/appdev/devPowerApps/SiteAssets/jquery-1.11.1.min.js"></script>
+
+<script>
+
+$(document).ready(function () {
+	Get_List_1();
+});
+
+$('#btnNext').click(function () {
+	IsNextClick = true;
+	PrevTable_Index++;
+	if(Total_Final_Table_Data[PrevTable_Index] != null || Total_Final_Table_Data[PrevTable_Index] != undefined)
+	{
+		IsPrevClick = true;
+		Build_Final_Table();
+	}
+	else
+	{
+		Get_List_1();
+	}
+});
+
+$('#btnPrev').click(function () {
+	debugger;
+	PrevTable_Index--;
+	IsPrevClick = true;
+	Build_Final_Table();
+});
+
+
+
+var L1_NextUrl = "https://team.effem.com/sites/appdev/devPowerApps/_api/web/lists/getbytitle('l1')/items?$top=10";
+var L2_NextUrl = "https://team.effem.com/sites/appdev/devPowerApps/_api/web/lists/getbytitle('l2')/items?$top=10";
+var L3_NextUrl = "https://team.effem.com/sites/appdev/devPowerApps/_api/web/lists/getbytitle('l3')/items?$top=10";
+var L4_NextUrl = "https://team.effem.com/sites/appdev/devPowerApps/_api/web/lists/getbytitle('l4')/items?$top=10";
+
+var Final_Table_Data = [];
+
+var Total_Final_Table_Data = [];
+var PrevTable_Index = 0;
+var IsNextClick = false;
+var IsPrevClick = false;
+
+
+
+function Get_List_1()
+{
+	GetSampleListItems(L1_NextUrl, 
+	function()
+	{
+		Get_List_2();
+	}, 
+	function()
+	{},
+	"L1");	
+}
+
+function Get_List_2()
+{
+	GetSampleListItems(L2_NextUrl, 
+	function()
+	{
+		Get_List_3();
+	}, 
+	function()
+	{},
+	"L2");	
+}
+
+function Get_List_3()
+{
+	GetSampleListItems(L3_NextUrl, 
+	function()
+	{
+		Get_List_4();
+	}, 
+	function()
+	{},
+	"L3");	
+}
+
+function Get_List_4()
+{
+	GetSampleListItems(L4_NextUrl, 
+	function()
+	{
+		Build_Final_Table();
+	}, 
+	function()
+	{},
+	"L4");	
+}
+
+function Build_Final_Table()
+{
+	if(IsPrevClick)
+	{
+		Final_Table_Data = Total_Final_Table_Data[PrevTable_Index];
+	}
+	else
+	{
+		var TmpAry = [...Final_Table_Data];
+		Total_Final_Table_Data.push(TmpAry);
+	}
+	
+	var tempDataTable = "";
+	$("#masterTable").html("");
+	
+    for(i=0; i< Final_Table_Data.length; i++)
+	{
+		tempDataTable += "<tr><td>" + Final_Table_Data[i].RequestNumber + "</td><td>" + Final_Table_Data[i].Name + "</td><td>" + Final_Table_Data[i].Age + "</td><td>" + Final_Table_Data[i].Dept + "</td><td>" + Final_Table_Data[i].Location + "</td></tr>";
+	}
+	var finalTable = "<table><tr><th>Request Number</th><th>Name</th><th>Age</th><th>Department</th><th>Location</th></tr>"+tempDataTable+"</table>";
+	debugger;
+	$("#masterTable").append(finalTable);
+	//alert ("Build_Final_Table here....");
+	Final_Table_Data = [];
+}
+
+function GetSampleListItems(Url, success, failure, MethodType) 
+{
+	siteURL = _spPageContextInfo.siteAbsoluteUrl + Url;
+	console.log("from top nav - " + siteURL);
+	
+	$.ajax({
+		url: Url,
+		headers: {
+			Accept: "application/json;odata=verbose"
+		},
+		async: false,
+		success: function (data) {
+			var items; // Data will have user object  
+
+			if (data != null) {
+				items = data.d;
+				if (items != null) {
+					var Details = items.results;
+										
+					switch(MethodType)
+					{
+						case "L1":
+							L1_NextUrl = data.d.__next;
+							
+							for(i=0; i < Details.length; i++)
+							{
+								Final_Table_Data.push({"RequestNumber": Details[i].RequestNumber, "Name": Details[i].Name, "Age": 0, "Dept": "", "Location": ""});
+								
+							}
+							
+							break;
+						case "L2":
+							L2_NextUrl = data.d.__next;
+							
+							for(i=0; i < Details.length; i++)
+							{
+								//Final_Table_Data.push({"RequestNumber": Details[i].RequestNumber, "Name": "", "Age": Details[i].Age, "Dept": "", "Location": ""});
+								addItemToArray({"RequestNumber": Details[i].RequestNumber, "Name": "", "Age": Details[i].Age, "Dept": "", "Location": ""}, 
+								MethodType);
+							}
+							
+							break;
+						case "L3":
+							L3_NextUrl = data.d.__next;
+							
+							for(i=0; i < Details.length; i++)
+							{
+								//Final_Table_Data.push({"RequestNumber": Details[i].RequestNumber, "Name": "", "Age": 0, "Dept": "", "Location": Details[i].Location});
+								addItemToArray({"RequestNumber": Details[i].RequestNumber, "Name": "", "Age": 0, "Dept": "", "Location": Details[i].Location}, 
+								MethodType);
+							}
+							
+							break;
+						case "L4":
+							L4_NextUrl = data.d.__next;
+							
+							for(i=0; i < Details.length; i++)
+							{
+								//Final_Table_Data.push({"RequestNumber": Details[i].RequestNumber, "Name": "", "Age": 0, "Dept": Details[i].Department, "Location": ""});
+								addItemToArray({"RequestNumber": Details[i].RequestNumber, "Name": "", "Age": 0, "Dept": Details[i].Department, "Location": ""}, MethodType);
+							}
+							break;
+					}
+
+					success();
+				}
+			}
+		},
+		eror: function (data) {
+			console.log("An error occurred. Please try again.");
+			failure();
+		}
+	});
+}
+function addItemToArray(currArray, MethodType){
+	var index = Final_Table_Data.findIndex(reqNo => reqNo.RequestNumber == currArray.RequestNumber);
+	switch(MethodType)
+					{
+						case "L2":
+						if(index >= 0)
+						{
+							Final_Table_Data[index].Age = currArray.Age;
+						}
+						break;
+						case "L3":
+						if(index >= 0)
+						{
+							Final_Table_Data[index].Location = currArray.Location;
+						}
+						break;
+						case "L4":
+						if(index >= 0)
+						{
+							Final_Table_Data[index].Dept = currArray.Dept;
+						}
+						break;
+					}
+}
+
+</script>
